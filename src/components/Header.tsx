@@ -28,7 +28,7 @@ export function buildNav(categories: Category[]): NavItem[] {
     {
       label: 'Blogs',
       to: '/blogs',
-      children: categories.filter((c) => !c.parentId).map(toItem),
+      children: categories.filter((c) => !c.parent_id).map(toItem),
     },
     {
       label: 'Academia',
