@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronDown, ChevronRight, Menu, PenLine, X } from 'lucide-react'
-import type { Category } from '../../db/schema'
 import { site } from '@/config/site'
 import { albums } from '@/config/site'
+
 import { SocialLinks } from './SocialIcons'
 import { useIdentity } from '@/lib/identity-context'
 import { cn } from '@/lib/utils'
+
+export type Category = { id:number; slug:string; name:string; description?:string; cover_image?:string|null; parent_id?:number|null }
 
 export type NavItem = {
   label: string
