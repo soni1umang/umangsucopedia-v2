@@ -1,1 +1,10 @@
-import {defineConfig} from 'vite'; import react from '@vitejs/plugin-react'; import {tanstackRouter} from '@tanstack/router-plugin/vite'; import tailwindcss from '@tailwindcss/vite'; import tsconfigPaths from 'vite-tsconfig-paths'; export default defineConfig({base:'/umangsucopedia-v2/',plugins:[tanstackRouter({target:'react',autoCodeSplitting:true}),tsconfigPaths(),tailwindcss(),react()]});
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  base: '/umangsucopedia-v2/',
+  resolve: { tsconfigPaths: true },
+  plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), tailwindcss(), react()],
+})
