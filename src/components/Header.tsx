@@ -20,7 +20,7 @@ export function buildNav(categories: Category[]): NavItem[] {
   const toItem = (c: Category): NavItem => ({
     label: c.name,
     to: `/blogs/${c.slug}`,
-    children: categories.filter((k) => k.parentId === c.id).map(toItem),
+    children: categories.filter((k) => k.parent_id === c.id).map(toItem),
   })
   return [
     { label: 'Home', to: '/' },
