@@ -1,0 +1,1 @@
+export function img(src:string|null|undefined,w:number,_h?:number){return src||''} export function formatDate(d:Date|string|null|undefined){if(!d)return '';return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
