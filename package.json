@@ -15,7 +15,9 @@
     "marked": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "zod": "latest"
+    "zod": "latest",
+    "clsx": "latest",
+    "tailwind-merge": "latest"
   },
   "devDependencies": {
     "@tanstack/router-plugin": "latest",
