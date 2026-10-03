@@ -1,1 +1,32 @@
-{"name":"umangsucopedia-v2","private":true,"version":"1.0.0","type":"module","scripts":{"dev":"vite","build":"vite build","preview":"vite preview"},"dependencies":{"@supabase/supabase-js":"latest","@tanstack/react-router":"latest","lucide-react":"latest","marked":"latest","react":"latest","react-dom":"latest","zod":"latest"},"devDependencies":{"@tanstack/router-plugin":"latest","@vitejs/plugin-react":"latest","@tailwindcss/vite":"latest","tailwindcss":"latest","typescript":"latest","vite":"latest"}}
+{
+  "name": "umangsucopedia-v2",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "latest",
+    "@tanstack/react-router": "latest",
+    "lucide-react": "latest",
+    "marked": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@tanstack/router-plugin": "latest",
+    "@vitejs/plugin-react": "latest",
+    "@tailwindcss/vite": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "vite-tsconfig-paths": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tailwindcss-animate": "latest"
+  }
+}
