@@ -26,6 +26,14 @@ function writeBrowserDraft(userId:string, drafts:Record<Key,unknown>) {
     localStorage.setItem(DRAFT_STORAGE_PREFIX + userId, JSON.stringify({ updatedAt:Date.now(), drafts }))
   } catch { /* Storage may be unavailable or full. The cloud save still works. */ }
 }
+function normalizeSiteSettings(value: unknown): SiteSettings {
+  const v = (value && typeof value === 'object' ? value : {}) as Partial<SiteSettings>
+  return {
+    ...defaultSiteSettings,
+    ...v,
+    socials: Array.isArray(v.socials) ? v.socials.map((s) => ({ ...s, enabled: s.enabled !== false })) : defaultSiteSettings.socials,
+  }
+}
 
 export const Route = createFileRoute('/admin/content')({ component: ContentStudio })
 
@@ -60,7 +68,7 @@ function ContentStudio() {
   const [admin,setAdmin] = useState(false)
   const [active,setActive] = useState<Key>('portfolio')
   const [saved,setSaved] = useState<Record<Key,unknown>>({})
-  const [drafts,setDrafts] = useState<Record<Key,unknown>>({ about, academia, portfolio, side_hustles: sideHustles, photography: albums, paintings })
+  const [drafts,setDrafts] = useState<Record<Key,unknown>>(defaults as Record<Key,unknown>)
   const [loading,setLoading] = useState(true)
   const [busy,setBusy] = useState(false)
   const [uploading,setUploading] = useState<string|null>(null)
@@ -80,9 +88,12 @@ function ContentStudio() {
     for (const row of r.data ?? []) map[row.key as Key] = row.content
     const draftMap = {} as Record<Key, unknown>
     ;(Object.keys(labels) as Key[]).forEach((key) => { draftMap[key] = map[key] ?? defaults[key] })
+    draftMap.site_settings = normalizeSiteSettings(draftMap.site_settings)
     const browserDraft = readBrowserDraft(user.id)
     if (browserDraft && browserDraft.updatedAt > 0) {
-      setDrafts({ ...draftMap, ...browserDraft.drafts })
+      const merged = { ...draftMap, ...browserDraft.drafts }
+      merged.site_settings = normalizeSiteSettings(merged.site_settings)
+      setDrafts(merged)
       setBrowserDraftTime(browserDraft.updatedAt)
     } else {
       setDrafts(draftMap)
