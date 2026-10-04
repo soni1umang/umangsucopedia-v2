@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronDown, ChevronRight, Menu, PenLine, X } from 'lucide-react'
 import { site } from '@/config/site'
-import { albums } from '@/config/site'
+import { useSiteSettings } from '@/lib/site-context'
 
 import { SocialLinks } from './SocialIcons'
 import { useIdentity } from '@/lib/identity-context'
@@ -16,7 +16,7 @@ export type NavItem = {
   children?: NavItem[]
 }
 
-export function buildNav(categories: Category[]): NavItem[] {
+export function buildNav(categories: Category[], photoAlbums: { slug: string; title: string }[] = []): NavItem[] {
   const toItem = (c: Category): NavItem => ({
     label: c.name,
     to: `/blogs/${c.slug}`,
@@ -38,7 +38,7 @@ export function buildNav(categories: Category[]): NavItem[] {
     {
       label: 'Photography',
       to: '/photography',
-      children: albums.map((a) => ({ label: a.title, to: `/photography/${a.slug}` })),
+      children: photoAlbums.map((a) => ({ label: a.title, to: `/photography/${a.slug}` })),
     },
     { label: 'Paints', to: '/paints' },
     { label: 'Side Hustles', to: '/side-hustles' },
@@ -118,6 +118,7 @@ function MobileItem({ item, onNavigate }: { item: NavItem; onNavigate: () => voi
 }
 
 export function Header({ nav }: { nav: NavItem[] }) {
+  const settings = useSiteSettings()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -142,12 +143,12 @@ export function Header({ nav }: { nav: NavItem[] }) {
       )}
     >
       <div className="container-uco flex h-16 items-center gap-6">
-        <Link to="/" className="group flex items-baseline gap-2" aria-label={`${site.title} home`}>
+        <Link to="/" className="group flex items-baseline gap-2" aria-label={`${settings.title} home`}>
           <span className="grid size-8 place-items-center rounded-full bg-ink font-display text-lg font-bold text-saffron transition group-hover:rotate-[-8deg]">
             U
           </span>
           <span className="font-display text-xl font-semibold tracking-tight text-ink">
-            {site.name}
+            {settings.name}
             <span className="text-terracotta">.</span>
           </span>
         </Link>
@@ -216,7 +217,7 @@ export function Header({ nav }: { nav: NavItem[] }) {
               ))}
             </ul>
             <div className="border-t border-ink/10 px-4 py-4">
-              <SocialLinks className="flex-wrap" />
+              <SocialLinks className="flex-wrap" links={settings.socials} />
             </div>
           </div>
         </div>
