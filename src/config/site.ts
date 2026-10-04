@@ -14,6 +14,8 @@ export const site = {
     'The personal encyclopedia of Umang: essays on politics, science, books, cinema and philosophy, plus academia, photography and paintings.',
   email: 'soni1.umang333@gmail.com',
   location: 'India',
+  academic_portfolio_url: 'https://umangsoni.faculty.bio/',
+  academic_portfolio_label: 'Full Academic Profile',
 }
 
 export type SocialKey =
