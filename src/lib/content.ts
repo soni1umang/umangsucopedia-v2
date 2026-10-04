@@ -34,6 +34,24 @@ export type SideHustleItem = {
   images?: string[]
 }
 
+export type PublicationItem = {
+  title: string
+  doi: string
+  year: string
+  journal: string
+  authors: string
+  publisher: string
+  volume: string
+  issue: string
+  pages: string
+  description: string
+  link: string
+  pdf_url: string
+  preview_image: string
+  citations?: number
+  featured?: boolean
+}
+
 export type SocialSetting = {
   key: string
   label: string
