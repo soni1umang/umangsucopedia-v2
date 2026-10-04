@@ -1,15 +1,16 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useMemo, useState, type ReactNode, type Dispatch, type SetStateAction } from 'react'
-import { ArrowDown, ArrowUp, ImagePlus, Link2, Plus, Save, Trash2, RotateCcw, Eye } from 'lucide-react'
+import { ArrowDown, ArrowUp, ImagePlus, Link2, Plus, Save, Trash2, RotateCcw, Eye, Sparkles, ExternalLink, FileText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useIdentity } from '@/lib/identity-context'
-import { getContent, saveContent, type AboutContent, type AcademiaContent, type Album, type Painting, type PortfolioItem, type SideHustleItem, type SiteSettings } from '@/lib/content'
+import { getContent, saveContent, type AboutContent, type AcademiaContent, type Album, type Painting, type PortfolioItem, type PublicationItem, type SideHustleItem, type SiteSettings } from '@/lib/content'
 import { about, academia, albums, paintings, portfolio, sideHustles, site, socials } from '@/config/site'
 
-type Key = 'site_settings' | 'about' | 'academia' | 'portfolio' | 'side_hustles' | 'photography' | 'paintings'
-const labels: Record<Key,string> = { site_settings:'Site settings', about:'About me', academia:'Academia', portfolio:'Academic work', side_hustles:'Other projects', photography:'Photography', paintings:'Paints' }
+type Key = 'site_settings' | 'about' | 'academia' | 'portfolio' | 'publications' | 'side_hustles' | 'photography' | 'paintings'
+const labels: Record<Key,string> = { site_settings:'Site settings', about:'About me', academia:'Academia', portfolio:'Academic work', publications:'Publications', side_hustles:'Other projects', photography:'Photography', paintings:'Paints' }
 const defaultSiteSettings: SiteSettings = { ...site, socials: socials.map((s) => ({ ...s, enabled: true })) }
-const defaults: Record<Key,unknown> = { site_settings:defaultSiteSettings, about, academia, portfolio, side_hustles:sideHustles, photography:albums, paintings }
+const publications: PublicationItem[] = []
+const defaults: Record<Key,unknown> = { site_settings:defaultSiteSettings, about, academia, portfolio, publications, side_hustles:sideHustles, photography:albums, paintings }
 
 export const Route = createFileRoute('/admin/content')({ component: ContentStudio })
 
@@ -119,6 +120,7 @@ function ContentStudio() {
         {active==='about' && <AboutEditor value={draft as AboutContent} setValue={setDraft}/>} 
         {active==='academia' && <AcademiaEditor value={draft as AcademiaContent} setValue={setDraft}/>} 
         {active==='portfolio' && <PortfolioEditor value={draft as PortfolioItem[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
+        {active==='publications' && <PublicationsEditor value={draft as PublicationItem[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
         {active==='side_hustles' && <SideHustlesEditor value={draft as SideHustleItem[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
         {active==='photography' && <PhotographyEditor value={draft as Album[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
         {active==='paintings' && <PaintingsEditor value={draft as Painting[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
@@ -190,6 +192,52 @@ function PortfolioEditor({value,setValue,uploading,imageChange}:{value:Portfolio
     </div>)}</div>
   </Card>
 }
+function PublicationsEditor({value,setValue,uploading,imageChange}:{value:PublicationItem[];setValue:Dispatch<SetStateAction<unknown>>;uploading:string|null;imageChange:(file:File,onDone:(url:string)=>void,id:string)=>Promise<void>}) {
+  const [doiBusy,setDoiBusy]=useState<number|null>(null)
+  const [doiMessage,setDoiMessage]=useState('')
+  function update(i:number,p:Partial<PublicationItem>){setValue(v=>(v as PublicationItem[]).map((x,n)=>n===i?{...x,...p}:x))}
+  function move(i:number,d:number){const a=[...value],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];setValue(a)}
+  const empty=():PublicationItem=>({title:'',doi:'',year:String(new Date().getFullYear()),journal:'',authors:'',publisher:'',volume:'',issue:'',pages:'',description:'',link:'',pdf_url:'',preview_image:'',citations:undefined,featured:false})
+  async function fetchDoi(i:number){
+    const doi=value[i].doi.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,'').replace(/^doi:\s*/i,'')
+    if(!doi){setDoiMessage('Enter a DOI first.');return}
+    setDoiBusy(i);setDoiMessage('')
+    try{
+      const res=await fetch('https://api.crossref.org/v1/works/'+encodeURIComponent(doi),{headers:{Accept:'application/json'}})
+      if(!res.ok)throw new Error('Crossref could not find this DOI.')
+      const json=await res.json()
+      const w=json?.message
+      if(!w)throw new Error('No publication metadata was returned.')
+      const year=(w['published-print']?.['date-parts']?.[0]?.[0] ?? w['published-online']?.['date-parts']?.[0]?.[0] ?? w['published']?.['date-parts']?.[0]?.[0] ?? '')+''
+      const authors=(w.author ?? []).map((a:any)=>[a.given,a.family].filter(Boolean).join(' ')).filter(Boolean).join(', ')
+      const link=w.URL || ('https://doi.org/'+doi)
+      const pdf=(w.link ?? []).find((x:any)=>String(x['content-type']||'').includes('pdf'))?.URL ?? ''
+      update(i,{doi,title:w.title?.[0]??'',year,journal:w['container-title']?.[0]??'',authors,publisher:w.publisher??'',volume:w.volume??'',issue:w.issue??'',pages:w.page??'',link,pdf_url:pdf,citations:typeof w['is-referenced-by-count']==='number'?w['is-referenced-by-count']:undefined})
+      setDoiMessage('Metadata imported. Check the fields before saving.')
+    }catch(e){setDoiMessage(e instanceof Error?e.message:'DOI lookup failed.')}
+    finally{setDoiBusy(null)}
+  }
+  return <Card title='Publications' actions={<button type='button' className='btn-saffron !px-3 !py-2 text-sm' onClick={()=>setValue([...value,empty()])}><Plus className='size-4'/> Add publication</button>}>
+    <div className='mb-6 rounded-2xl border-2 border-ink bg-ink p-5 text-paper md:p-6'>
+      <div className='flex items-start gap-3'><Sparkles className='mt-0.5 size-5 text-saffron'/><div><p className='font-display text-xl font-semibold'>Your research shelf, with a little magic.</p><p className='mt-1 text-sm text-paper/65'>Paste a DOI and Ucopedia will pull the bibliographic metadata from Crossref. You can then add your own visual first-page preview.</p></div></div>
+    </div>
+    {doiMessage && <p className='mb-5 rounded-xl bg-saffron/40 px-4 py-3 text-sm'>{doiMessage}</p>}
+    <div className='space-y-8'>{value.length===0 && <div className='rounded-2xl border border-dashed border-ink/20 p-10 text-center'><FileText className='mx-auto size-8 text-ink/35'/><p className='mt-3 font-display text-xl italic'>No publications yet.</p><p className='mt-1 text-sm text-ink/55'>Add your first paper and let the DOI do the repetitive work.</p></div>}
+      {value.map((p,i)=><div key={i} className='rounded-2xl border-2 border-ink/10 bg-paper p-5 md:p-6'>
+        <div className='mb-5 flex flex-wrap items-start justify-between gap-3'><div><p className='font-mono text-xs uppercase tracking-widest text-terracotta'>Publication {String(i+1).padStart(2,'0')}</p><h3 className='mt-1 font-display text-2xl font-semibold'>{p.title||'Untitled paper'}</h3></div><ItemActions index={i} total={value.length} label='publication' onUp={()=>move(i,-1)} onDown={()=>move(i,1)} onDelete={()=>setValue(value.filter((_,n)=>n!==i))}/></div>
+        <div className='flex flex-col gap-3 rounded-xl border border-ink/10 bg-card p-4 md:flex-row md:items-end'><div className='min-w-0 flex-1'><Field label='DOI'><TextInput value={p.doi} onChange={e=>update(i,{doi:e.target.value})} placeholder='10.xxxx/xxxxx'/></Field></div><button type='button' className='btn-ink' onClick={()=>void fetchDoi(i)} disabled={doiBusy!==null}>{doiBusy===i?<><Sparkles className='size-4 animate-pulse'/> Fetching…</>:<><Sparkles className='size-4'/> Fetch from DOI</>}</button></div>
+        <div className='mt-5 grid gap-4 md:grid-cols-[1.6fr_1fr_7rem]'><Field label='Title'><TextInput value={p.title} onChange={e=>update(i,{title:e.target.value})}/></Field><Field label='Journal / venue'><TextInput value={p.journal} onChange={e=>update(i,{journal:e.target.value})}/></Field><Field label='Year'><TextInput value={p.year} onChange={e=>update(i,{year:e.target.value})}/></Field></div>
+        <div className='mt-4 grid gap-4 md:grid-cols-2'><Field label='Authors'><TextInput value={p.authors} onChange={e=>update(i,{authors:e.target.value})}/></Field><Field label='Publisher'><TextInput value={p.publisher} onChange={e=>update(i,{publisher:e.target.value})}/></Field></div>
+        <div className='mt-4 grid gap-4 md:grid-cols-3'><Field label='Volume'><TextInput value={p.volume} onChange={e=>update(i,{volume:e.target.value})}/></Field><Field label='Issue'><TextInput value={p.issue} onChange={e=>update(i,{issue:e.target.value})}/></Field><Field label='Pages'><TextInput value={p.pages} onChange={e=>update(i,{pages:e.target.value})}/></Field></div>
+        <div className='mt-4'><Field label='Your note / contribution'><TextArea rows={4} value={p.description} onChange={e=>update(i,{description:e.target.value})} placeholder='What did you do? What should a reader notice?' /></Field></div>
+        <div className='mt-4 grid gap-4 md:grid-cols-2'><Field label='Paper link'><TextInput value={p.link} onChange={e=>update(i,{link:e.target.value})} placeholder='DOI or publisher page'/></Field><Field label='Open-access PDF URL'><TextInput value={p.pdf_url} onChange={e=>update(i,{pdf_url:e.target.value})} placeholder='Optional'/></Field></div>
+        <div className='mt-5 rounded-2xl border border-ink/10 bg-card p-4'><div className='flex flex-wrap items-center justify-between gap-3'><div><h4 className='font-semibold'>First-page preview</h4><p className='text-xs text-ink/50'>Upload a screenshot/image of page 1. This is the safest and most reliable way to get a crisp preview on the public site.</p></div><ImagePicker value={p.preview_image} onChange={url=>update(i,{preview_image:url})} uploading={uploading} imageChange={imageChange} id={'publication-preview-'+i}/></div>{p.preview_image && <img src={p.preview_image} alt='First page preview' className='mt-4 max-h-80 w-auto rounded-lg border border-ink/10 shadow-sm'/>}</div>
+        <div className='mt-5 flex flex-wrap items-center justify-between gap-3'><label className='flex items-center gap-2 text-sm font-medium'><input type='checkbox' checked={!!p.featured} onChange={e=>update(i,{featured:e.target.checked})}/> Feature this publication</label>{p.doi && <a href={'https://doi.org/'+p.doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i,'').replace(/^doi:\s*/i,'')} target='_blank' rel='noreferrer' className='inline-flex items-center gap-1 text-sm font-semibold text-terracotta hover:underline'>Open DOI <ExternalLink className='size-3.5'/></a>}</div>
+      </div>)}
+    </div>
+  </Card>
+}
+
 function SideHustlesEditor({value,setValue,uploading,imageChange}:{value:SideHustleItem[];setValue:Dispatch<SetStateAction<unknown>>;uploading:string|null;imageChange:(file:File,onDone:(url:string)=>void,id:string)=>Promise<void>}) {
   function update(i:number,p:Partial<SideHustleItem>){setValue(v=>(v as SideHustleItem[]).map((x,n)=>n===i?{...x,...p}:x))}
   function move(i:number,d:number){const a=[...value],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];setValue(a)}
