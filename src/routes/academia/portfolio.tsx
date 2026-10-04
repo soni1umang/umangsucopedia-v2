@@ -2,13 +2,16 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowUpRight, ChevronRight } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { portfolio, site } from '@/config/site'
+import { getContent, type PortfolioItem } from '@/lib/content'
 
 export const Route = createFileRoute('/academia/portfolio')({
+  loader: () => getContent<PortfolioItem[]>('portfolio', portfolio),
   head: () => ({ meta: [{ title: `Portfolio · ${site.title}` }] }),
   component: Portfolio,
 })
 
 function Portfolio() {
+  const items = Route.useLoaderData()
   return (
     <>
       <div className="container-uco pt-10">
@@ -22,22 +25,14 @@ function Portfolio() {
       </PageHeader>
       <section className="container-uco">
         <ul className="divide-y-2 divide-ink/10 border-y-2 border-ink">
-          {portfolio.map((p, i) => {
+          {items.map((p, i) => {
             const Tag = p.link ? 'a' : 'div'
             return (
-              <li key={p.title}>
-                <Tag
-                  {...(p.link ? { href: p.link, target: '_blank', rel: 'noopener noreferrer' } : {})}
-                  className="group grid gap-2 py-7 transition md:grid-cols-[4rem_1fr_10rem_4rem] md:items-center hover:bg-card"
-                >
+              <li key={p.title + i}>
+                <Tag {...(p.link ? { href: p.link, target: '_blank', rel: 'noopener noreferrer' } : {})} className="group grid gap-2 py-7 transition hover:bg-card md:grid-cols-[4rem_1fr_10rem_4rem] md:items-center">
                   <span className="font-mono text-sm text-ink/40">{String(i + 1).padStart(2, '0')}</span>
-                  <span>
-                    <span className="block font-display text-2xl font-semibold md:text-3xl">{p.title}</span>
-                    <span className="mt-1 block text-ink/65">{p.description}</span>
-                  </span>
-                  <span className="font-mono text-xs uppercase tracking-widest text-terracotta">
-                    {p.kind} · {p.year}
-                  </span>
+                  <span><span className="block font-display text-2xl font-semibold md:text-3xl">{p.title}</span><span className="mt-1 block text-ink/65">{p.description}</span></span>
+                  <span className="font-mono text-xs uppercase tracking-widest text-terracotta">{p.kind} · {p.year}</span>
                   {p.link && <ArrowUpRight className="size-6 justify-self-end transition group-hover:-translate-y-1 group-hover:translate-x-1" />}
                 </Tag>
               </li>
