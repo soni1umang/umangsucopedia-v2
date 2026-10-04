@@ -3,12 +3,13 @@ import { useEffect, useMemo, useState, type ReactNode, type Dispatch, type SetSt
 import { ArrowDown, ArrowUp, ImagePlus, Link2, Plus, Save, Trash2, RotateCcw, Eye } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useIdentity } from '@/lib/identity-context'
-import { getContent, saveContent, type AboutContent, type AcademiaContent, type Album, type Painting, type PortfolioItem, type SideHustleItem } from '@/lib/content'
-import { about, academia, albums, paintings, portfolio, sideHustles } from '@/config/site'
+import { getContent, saveContent, type AboutContent, type AcademiaContent, type Album, type Painting, type PortfolioItem, type SideHustleItem, type SiteSettings } from '@/lib/content'
+import { about, academia, albums, paintings, portfolio, sideHustles, site, socials } from '@/config/site'
 
-type Key = 'about' | 'academia' | 'portfolio' | 'side_hustles' | 'photography' | 'paintings'
-const labels: Record<Key,string> = { about:'About me', academia:'Academia', portfolio:'Academic portfolio', side_hustles:'Other projects', photography:'Photography', paintings:'Paints' }
-const defaults: Record<Key,unknown> = { about, academia, portfolio, side_hustles:sideHustles, photography:albums, paintings }
+type Key = 'site_settings' | 'about' | 'academia' | 'portfolio' | 'side_hustles' | 'photography' | 'paintings'
+const labels: Record<Key,string> = { site_settings:'Site settings', about:'About me', academia:'Academia', portfolio:'Academic work', side_hustles:'Other projects', photography:'Photography', paintings:'Paints' }
+const defaultSiteSettings: SiteSettings = { ...site, socials: socials.map((s) => ({ ...s, enabled: true })) }
+const defaults: Record<Key,unknown> = { site_settings:defaultSiteSettings, about, academia, portfolio, side_hustles:sideHustles, photography:albums, paintings }
 
 export const Route = createFileRoute('/admin/content')({ component: ContentStudio })
 
@@ -114,6 +115,7 @@ function ContentStudio() {
     <div className='mt-8 grid gap-6 lg:grid-cols-[15rem_1fr]'>
       <nav className='self-start rounded-2xl border border-ink/15 bg-card p-2 lg:sticky lg:top-24'>{tabs.map(k=><button type='button' key={k} onClick={()=>{if(dirty && !confirm('You have unsaved changes. Switch sections anyway?')) return; setActive(k)}} className={'mb-1 block w-full rounded-xl px-4 py-3 text-left text-sm font-semibold last:mb-0 '+(active===k?'bg-ink text-paper':'hover:bg-paper-deep')}>{labels[k]}</button>)}</nav>
       <div className='min-w-0'>
+        {active==='site_settings' && <SiteSettingsEditor value={draft as SiteSettings} setValue={setDraft}/>} 
         {active==='about' && <AboutEditor value={draft as AboutContent} setValue={setDraft}/>} 
         {active==='academia' && <AcademiaEditor value={draft as AcademiaContent} setValue={setDraft}/>} 
         {active==='portfolio' && <PortfolioEditor value={draft as PortfolioItem[]} setValue={setDraft}/>} 
@@ -130,6 +132,16 @@ function ContentStudio() {
 }
 
 function Card({title,children,actions}:{title:string;children:ReactNode;actions?:ReactNode}) { return <div className='rounded-2xl border border-ink/15 bg-card p-5 md:p-6'><div className='mb-5 flex flex-wrap items-start justify-between gap-3'><h2 className='text-2xl font-semibold'>{title}</h2>{actions}</div>{children}</div> }
+
+function SiteSettingsEditor({value,setValue}:{value:SiteSettings;setValue:Dispatch<SetStateAction<unknown>>}) {
+  const set=(patch:Partial<SiteSettings>)=>setValue(v=>({...v as SiteSettings,...patch}))
+  function updateSocial(i:number, patch:Partial<SiteSettings['socials'][number]>) { set({socials:value.socials.map((s,n)=>n===i?{...s,...patch}:s)}) }
+  return <div className='space-y-6'>
+    <Card title='Identity'><div className='grid gap-5 md:grid-cols-2'><Field label='Site name'><TextInput value={value.name} onChange={e=>set({name:e.target.value})}/></Field><Field label='Owner name'><TextInput value={value.owner} onChange={e=>set({owner:e.target.value})}/></Field><Field label='Browser / page title'><TextInput value={value.title} onChange={e=>set({title:e.target.value})}/></Field><Field label='Tagline'><TextInput value={value.tagline} onChange={e=>set({tagline:e.target.value})}/></Field></div><div className='mt-5'><Field label='Site description'><TextArea rows={4} value={value.description} onChange={e=>set({description:e.target.value})}/></Field></div></Card>
+    <Card title='Contact'><div className='grid gap-5 md:grid-cols-2'><Field label='Email'><TextInput type='email' value={value.email} onChange={e=>set({email:e.target.value})}/></Field><Field label='Location'><TextInput value={value.location} onChange={e=>set({location:e.target.value})}/></Field></div></Card>
+    <Card title='Social profiles'><p className='mb-5 text-sm text-ink/55'>Switch profiles on or off and change their links without touching code.</p><div className='grid gap-4 md:grid-cols-2'>{value.socials.map((s,i)=><div key={s.key} className='rounded-xl border border-ink/10 bg-paper p-4'><div className='mb-3 flex items-center justify-between'><span className='font-semibold'>{s.label}</span><label className='flex items-center gap-2 text-xs font-medium'><input type='checkbox' checked={s.enabled} onChange={e=>updateSocial(i,{enabled:e.target.checked})}/> Show</label></div><TextInput value={s.href} onChange={e=>updateSocial(i,{href:e.target.value})} placeholder='https://…'/></div>)}</div></Card>
+  </div>
+}
 
 function AboutEditor({value,setValue}:{value:AboutContent;setValue:Dispatch<SetStateAction<unknown>>}) {
   const set=(patch:Partial<AboutContent>)=>setValue(v=>({...v as AboutContent,...patch}))
@@ -157,14 +169,27 @@ function AcademiaEditor({value,setValue}:{value:AcademiaContent;setValue:React.D
     <Card title='Research interests' actions={<button type='button' className='btn-ghost !px-3 !py-2 text-sm' onClick={()=>set({interests:[...value.interests,'']})}><Plus className='size-4'/> Add interest</button>}><div className='grid gap-3 sm:grid-cols-2'>{value.interests.map((x,i)=><div key={i} className='flex gap-2'><TextInput value={x} onChange={e=>set({interests:value.interests.map((v,n)=>n===i?e.target.value:v)})}/><button type='button' className='grid size-11 shrink-0 place-items-center rounded-xl border border-ink/10 text-terracotta' onClick={()=>set({interests:value.interests.filter((_,n)=>n!==i)})}><Trash2 className='size-4'/></button></div>)}</div></Card></div>
 }
 
-function PortfolioEditor({value,setValue}:{value:PortfolioItem[];setValue:React.Dispatch<React.SetStateAction<unknown>>}) {
+function PortfolioEditor({value,setValue}:{value:PortfolioItem[];setValue:Dispatch<SetStateAction<unknown>>}) {
   function update(i:number,p:Partial<PortfolioItem>){setValue(v=>(v as PortfolioItem[]).map((x,n)=>n===i?{...x,...p}:x))}
   function move(i:number,d:number){const a=[...value],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];setValue(a)}
-  return <Card title='Academic portfolio' actions={<button type='button' className='btn-saffron !px-3 !py-2 text-sm' onClick={()=>setValue([...value,{title:'',kind:'Research',year:String(new Date().getFullYear()),description:'',link:''}])}><Plus className='size-4'/> Add project</button>}>
-    <div className='space-y-5'>{value.map((p,i)=><div key={i} className='rounded-2xl border border-ink/10 bg-paper p-5'><div className='mb-4 flex items-center justify-between gap-3'><h3 className='font-display text-xl font-semibold'>{p.title||'Untitled project'}</h3><ItemActions index={i} total={value.length} label='project' onUp={()=>move(i,-1)} onDown={()=>move(i,1)} onDelete={()=>setValue(value.filter((_,n)=>n!==i))}/></div><div className='grid gap-4 md:grid-cols-[1fr_9rem_7rem]'><Field label='Title'><TextInput value={p.title} onChange={e=>update(i,{title:e.target.value})}/></Field><Field label='Type'><TextInput value={p.kind} onChange={e=>update(i,{kind:e.target.value})}/></Field><Field label='Year'><TextInput value={p.year} onChange={e=>update(i,{year:e.target.value})}/></Field></div><Field label='Description'><TextArea className='mt-1' rows={3} value={p.description} onChange={e=>update(i,{description:e.target.value})}/></Field><Field label='External link'><div className='relative'><Link2 className='absolute left-3 top-3 size-4 text-ink/35'/><TextInput className='pl-9' value={p.link} onChange={e=>update(i,{link:e.target.value})} placeholder='https://…'/></div></Field></div>)}</div>
+  function addImage(i:number){update(i,{images:[...(value[i].images ?? []),'']})}
+  return <Card title='Academic work' actions={<button type='button' className='btn-saffron !px-3 !py-2 text-sm' onClick={()=>setValue([...value,{title:'',kind:'Research',year:String(new Date().getFullYear()),description:'',link:'',venue:'',authors:'',images:[],featured:false}])}><Plus className='size-4'/> Add item</button>}>
+    <p className='mb-5 text-sm text-ink/55'>One flexible collection for papers, research projects, talks, awards, certificates, thesis work and other academic milestones.</p>
+    <div className='space-y-5'>{value.map((p,i)=><div key={i} className='rounded-2xl border border-ink/10 bg-paper p-5'>
+      <div className='mb-4 flex items-center justify-between gap-3'><h3 className='font-display text-xl font-semibold'>{p.title||'Untitled item'}</h3><ItemActions index={i} total={value.length} label='academic item' onUp={()=>move(i,-1)} onDown={()=>move(i,1)} onDelete={()=>setValue(value.filter((_,n)=>n!==i))}/></div>
+      <div className='grid gap-4 md:grid-cols-[1fr_9rem_7rem]'>
+        <Field label='Title'><TextInput value={p.title} onChange={e=>update(i,{title:e.target.value})}/></Field>
+        <Field label='Type'><select className='field w-full' value={p.kind} onChange={e=>update(i,{kind:e.target.value})}>{['Research','Publication','Talk','Award','Certificate','Thesis','Teaching','Project','Other'].map(x=><option key={x}>{x}</option>)}</select></Field>
+        <Field label='Year'><TextInput value={p.year} onChange={e=>update(i,{year:e.target.value})}/></Field>
+      </div>
+      <div className='mt-4 grid gap-4 md:grid-cols-2'><Field label='Venue / organisation'><TextInput value={p.venue ?? ''} onChange={e=>update(i,{venue:e.target.value})} placeholder='Journal, conference, institute…'/></Field><Field label='Authors / collaborators'><TextInput value={p.authors ?? ''} onChange={e=>update(i,{authors:e.target.value})} placeholder='Optional'/></Field></div>
+      <div className='mt-4'><Field label='Description'><TextArea rows={4} value={p.description} onChange={e=>update(i,{description:e.target.value})}/></Field></div>
+      <div className='mt-4'><Field label='External link'><div className='relative'><Link2 className='absolute left-3 top-3 size-4 text-ink/35'/><TextInput className='pl-9' value={p.link} onChange={e=>update(i,{link:e.target.value})} placeholder='https:// DOI, paper, slides…'/></div></Field></div>
+      <div className='mt-4'><label className='flex items-center gap-2 text-sm font-medium'><input type='checkbox' checked={!!p.featured} onChange={e=>update(i,{featured:e.target.checked})}/> Highlight this item publicly</label></div>
+      <div className='mt-5 rounded-xl border border-ink/10 bg-card p-4'><div className='mb-3 flex items-center justify-between'><div><h4 className='font-semibold'>Project images</h4><p className='text-xs text-ink/50'>Add lab photos, screenshots, posters, certificates or other visuals.</p></div><button type='button' className='btn-ghost !px-3 !py-2 text-sm' onClick={()=>addImage(i)}><Plus className='size-4'/> Add picture</button></div><div className='space-y-3'>{(p.images ?? []).map((src,j)=><div key={j} className='rounded-xl border border-ink/10 bg-paper p-3'><div className='mb-2 flex justify-end'><button type='button' className='text-xs text-terracotta' onClick={()=>update(i,{images:(p.images ?? []).filter((_,n)=>n!==j)})}>Remove</button></div><ImagePicker value={src} onChange={url=>update(i,{images:(p.images ?? []).map((x,n)=>n===j?url:x)})} uploading={uploading} imageChange={imageChange} id={'academic-'+i+'-image-'+j}/></div>)}</div></div>
+    </div>)}</div>
   </Card>
 }
-
 function SideHustlesEditor({value,setValue,uploading,imageChange}:{value:SideHustleItem[];setValue:Dispatch<SetStateAction<unknown>>;uploading:string|null;imageChange:(file:File,onDone:(url:string)=>void,id:string)=>Promise<void>}) {
   function update(i:number,p:Partial<SideHustleItem>){setValue(v=>(v as SideHustleItem[]).map((x,n)=>n===i?{...x,...p}:x))}
   function move(i:number,d:number){const a=[...value],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];setValue(a)}
