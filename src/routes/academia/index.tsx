@@ -3,6 +3,7 @@ import { ArrowRight, BookOpen, ExternalLink, GraduationCap, Sparkles } from 'luc
 import { PageHeader } from '@/components/PageHeader'
 import { academia, publications as fallbackPublications, site } from '@/config/site'
 import { getContent, type AcademiaContent, type PublicationItem } from '@/lib/content'
+import { useSiteSettings } from '@/lib/site-context'
 
 export const Route = createFileRoute('/academia/')({
   loader: async () => {
