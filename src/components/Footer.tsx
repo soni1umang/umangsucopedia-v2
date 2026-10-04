@@ -19,6 +19,7 @@ export function Footer({ nav }: { nav: NavItem[] }) {
           <p className="mt-2 font-display text-lg italic text-paper/70">{settings.tagline}</p>
           <p className="mt-6 max-w-sm text-sm leading-relaxed text-paper/60">{settings.description}</p>
           <SocialLinks
+            links={settings.socials}
             className="mt-6 flex-wrap gap-2"
             itemClassName="border border-paper/15 text-paper/80 hover:border-saffron"
           />
