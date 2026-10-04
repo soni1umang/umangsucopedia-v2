@@ -6,6 +6,7 @@ import { CategoryCard } from '@/components/CategoryCard'
 import { SocialLinks } from '@/components/SocialIcons'
 import { about, albums, paintings, site } from '@/config/site'
 import { getContent, type Album, type AboutContent, type Painting } from '@/lib/content'
+import { useSiteSettings } from '@/lib/site-context'
 import { img } from '@/lib/img'
 
 export const Route = createFileRoute('/')({
@@ -21,6 +22,7 @@ const sections = [
 ] as const
 
 function Home() {
+  const settings = useSiteSettings()
   const { latest, categories, about: aboutData, albums: albumData, paintings: paintingData } = Route.useLoaderData()
   const [featured, ...rest] = latest
 
@@ -28,16 +30,15 @@ function Home() {
     <>
       <section className="container-uco grid items-center gap-10 pb-16 pt-10 md:grid-cols-[1.1fr_1fr] md:pt-16">
         <div>
-          <p className="eyebrow">{site.tagline}</p>
+          <p className="eyebrow">{settings.tagline}</p>
           <h1 className="mt-4 text-6xl font-semibold leading-[0.95] tracking-tight md:text-8xl">
-            {site.owner}’s
+            {settings.owner}’s
             <br />
             <span className="italic text-terracotta">Ucopedia</span>
             <span className="text-saffron">.</span>
           </h1>
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink/75">
-            A personal encyclopedia of one curious mind: essays on politics, science, books,
-            cinema and philosophy, alongside my academic work, photographs and paintings.
+            {settings.description}
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link to="/blogs" className="btn-saffron">
