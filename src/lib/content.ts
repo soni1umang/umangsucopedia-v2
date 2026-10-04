@@ -27,6 +27,7 @@ export type SideHustleItem = {
   status: string
   description: string
   link: string
+  images?: string[]
 }
 
 export type Photo = { src: string; caption: string }
