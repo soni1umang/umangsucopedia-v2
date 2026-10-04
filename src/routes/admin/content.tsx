@@ -74,6 +74,8 @@ function ContentStudio() {
   const [uploading,setUploading] = useState<string|null>(null)
   const [error,setError] = useState('')
   const [notice,setNotice] = useState('')
+  const [browserDraftReady,setBrowserDraftReady] = useState(false)
+  const [browserDraftTime,setBrowserDraftTime] = useState<number|null>(null)
 
   async function load() {
     if (!user) return
