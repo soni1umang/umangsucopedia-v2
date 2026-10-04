@@ -28,13 +28,13 @@ function writeBrowserDraft(userId:string, drafts:Record<Key,unknown>) {
 }
 function normalizeSiteSettings(value: unknown): SiteSettings {
   const v = (value && typeof value === 'object' ? value : {}) as Partial<SiteSettings>
-  return {
-    ...defaultSiteSettings,
-    ...v,
-    socials: Array.isArray(v.socials)
-      ? v.socials.map((s:any) => ({ ...s, enabled: s.enabled !== false, icon: s.icon ?? (s.key === 'instagram2' ? 'instagram' : s.key) }))
-      : defaultSiteSettings.socials,
+  const list = Array.isArray(v.socials)
+    ? v.socials.map((s:any) => ({ ...s, enabled: s.enabled !== false, icon: s.icon ?? (s.key === 'instagram2' ? 'instagram' : s.key) }))
+    : [...defaultSiteSettings.socials]
+  if (!list.some((s:any) => s.key === 'instagram2')) {
+    list.push({ key: 'instagram2', label: 'Instagram · second account', href: '', enabled: false, icon: 'instagram' })
   }
+  return { ...defaultSiteSettings, ...v, socials: list }
 }
 
 export const Route = createFileRoute('/admin/content')({ component: ContentStudio })
