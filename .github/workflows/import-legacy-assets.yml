@@ -19,7 +19,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p public/img
-          base="https://raw.githubusercontent.com/soni1umang/umangsucopedia/main/public/img"
+          base="https://umangsucopedia.netlify.app/img"
           files=(
             hero.jpg
             cat-politics.jpg
