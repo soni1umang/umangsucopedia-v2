@@ -1,10 +1,19 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
-import type { PostSummary } from '@/server/blog.server'
 import { formatDate, img } from '@/lib/img'
 import { cn } from '@/lib/utils'
 
-export function PostCard({ post, featured = false }: { post: PostSummary; featured?: boolean }) {
+type Post = {
+  id: number
+  slug: string
+  title: string
+  excerpt: string
+  cover_image: string | null
+  published_at: string | null
+  category?: { name?: string | null } | null
+}
+
+export function PostCard({ post, featured = false }: { post: Post; featured?: boolean }) {
   return (
     <article
       className={cn(
@@ -12,10 +21,10 @@ export function PostCard({ post, featured = false }: { post: PostSummary; featur
         featured && 'md:flex-row',
       )}
     >
-      {post.coverImage ? (
+      {post.cover_image ? (
         <div className={cn('overflow-hidden bg-paper-deep', featured ? 'md:w-1/2' : 'aspect-[16/10]')}>
           <img
-            src={img(post.coverImage, featured ? 900 : 640, featured ? 640 : 400)}
+            src={img(post.cover_image, featured ? 900 : 640, featured ? 640 : 400)}
             alt=""
             loading="lazy"
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
@@ -36,12 +45,12 @@ export function PostCard({ post, featured = false }: { post: PostSummary; featur
       )}
       <div className={cn('flex flex-1 flex-col p-6', featured && 'md:p-10')}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-          {post.category && (
+          {post.category?.name && (
             <span className="font-mono uppercase tracking-widest text-terracotta">
               {post.category.name}
             </span>
           )}
-          <time className="text-ink/50">{formatDate(post.publishedAt)}</time>
+          <time className="text-ink/50">{formatDate(post.published_at)}</time>
         </div>
         <h3
           className={cn(
