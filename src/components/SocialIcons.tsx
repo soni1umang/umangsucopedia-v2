@@ -1,4 +1,5 @@
 import { socials, type SocialKey } from '@/config/site'
+import type { SocialSetting } from '@/lib/content'
 import { cn } from '@/lib/utils'
 
 const paths: Record<SocialKey, React.ReactNode> = {
