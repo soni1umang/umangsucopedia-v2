@@ -65,30 +65,38 @@ export function SocialLinks({
   className,
   itemClassName,
   iconClassName,
+  links,
 }: {
   className?: string
   itemClassName?: string
   iconClassName?: string
+  links?: SocialSetting[]
 }) {
+  const items = (links ?? socials.map((s) => ({ ...s, enabled: true, icon: s.key as SocialKey })))
+    .filter((s) => s.enabled && s.href)
+
   return (
     <ul className={cn('flex items-center gap-1', className)}>
-      {socials.map((s) => (
-        <li key={s.key}>
-          <a
-            href={s.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={s.label}
-            title={s.label}
-            className={cn(
-              'grid size-9 place-items-center rounded-full text-ink/70 transition hover:-translate-y-0.5 hover:bg-saffron hover:text-ink',
-              itemClassName,
-            )}
-          >
-            <SocialIcon name={s.key} className={iconClassName} />
-          </a>
-        </li>
-      ))}
+      {items.map((s) => {
+        const icon = (s.icon ?? s.key) as SocialKey
+        return (
+          <li key={s.key}>
+            <a
+              href={s.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={s.label}
+              title={s.label}
+              className={cn(
+                'grid size-9 place-items-center rounded-full text-ink/70 transition hover:-translate-y-0.5 hover:bg-saffron hover:text-ink',
+                itemClassName,
+              )}
+            >
+              <SocialIcon name={icon} className={iconClassName} />
+            </a>
+          </li>
+        )
+      })}
     </ul>
   )
 }
