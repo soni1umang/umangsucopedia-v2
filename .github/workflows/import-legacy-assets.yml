@@ -1,0 +1,59 @@
+name: Import legacy Ucopedia images
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  import-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy legacy image assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/img
+          base="https://raw.githubusercontent.com/soni1umang/umangsucopedia/main/public/img"
+          files=(
+            hero.jpg
+            cat-politics.jpg
+            cat-science.jpg
+            cat-books.jpg
+            cat-cinema.jpg
+            cat-philosophy.jpg
+            cat-my-questions.jpg
+            cat-entangled-minds.jpg
+            cat-unpolished-beginner.jpg
+            kerala-1.jpg
+            kerala-2.jpg
+            kerala-3.jpg
+            kerala-4.jpg
+            paint-1.jpg
+            paint-2.jpg
+            paint-3.jpg
+          )
+          for file in "${files[@]}"; do
+            if [ ! -f "public/img/${file}" ]; then
+              curl -fsSL "${base}/${file}" -o "public/img/${file}"
+            fi
+          done
+
+      - name: Commit imported images
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- public/img; then
+            echo "All legacy images are already present."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/img
+          git commit -m "Import legacy Ucopedia image assets"
+          git push
