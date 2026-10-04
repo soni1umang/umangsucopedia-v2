@@ -19,7 +19,13 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       setSettings({
         ...fallback,
         ...data,
-        socials: Array.isArray(data?.socials) ? data.socials.map((s:any) => ({ ...s, icon: s.icon ?? (s.key === 'instagram2' ? 'instagram' : s.key) })) : fallback.socials,
+        socials: Array.isArray(data?.socials) ? (() => {
+          const list = data.socials.map((s:any) => ({ ...s, icon: s.icon ?? (s.key === 'instagram2' ? 'instagram' : s.key) }))
+          if (!list.some((s:any) => s.key === 'instagram2')) {
+            list.push({ key: 'instagram2', label: 'Instagram · second account', href: '', enabled: false, icon: 'instagram' })
+          }
+          return list
+        })() : fallback.socials,
       })
     })
     return () => { alive = false }
