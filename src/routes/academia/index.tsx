@@ -18,6 +18,7 @@ export const Route = createFileRoute('/academia/')({
 
 function Academia() {
   const { data, pubs } = Route.useLoaderData()
+  const settings = useSiteSettings()
   const featured = pubs.find((p) => p.featured) ?? pubs[0]
   return (
     <>
@@ -55,9 +56,9 @@ function Academia() {
               <span><span className="flex items-center gap-2 font-display text-2xl font-semibold"><BookOpen className="size-5 text-saffron"/>Publications</span><span className="text-sm text-paper/65">{pubs.length ? pubs.length + ' ' + (pubs.length === 1 ? 'paper' : 'papers') + ' in the record' : 'Your papers, beautifully archived'}</span></span>
               <ArrowRight className="size-6 text-saffron transition group-hover:translate-x-1" />
             </Link>
-            {data.academic_portfolio_url && (
-              <a href={data.academic_portfolio_url} target="_blank" rel="noreferrer" className="group flex items-center justify-between rounded-2xl border-2 border-ink bg-card p-6 transition hover:bg-paper-deep hover:shadow-[6px_6px_0_var(--color-ink)]">
-                <span><span className="flex items-center gap-2 font-display text-2xl font-semibold"><ExternalLink className="size-5 text-terracotta"/>{data.academic_portfolio_label || 'Full Academic Profile'}</span><span className="text-sm text-ink/60">Open my complete academic profile ↗</span></span>
+            {settings.academic_portfolio_url && (
+              <a href={settings.academic_portfolio_url} target="_blank" rel="noreferrer" className="group flex items-center justify-between rounded-2xl border-2 border-ink bg-card p-6 transition hover:bg-paper-deep hover:shadow-[6px_6px_0_var(--color-ink)]">
+                <span><span className="flex items-center gap-2 font-display text-2xl font-semibold"><ExternalLink className="size-5 text-terracotta"/>{settings.academic_portfolio_label || 'Full Academic Profile'}</span><span className="text-sm text-ink/60">Open my complete academic profile ↗</span></span>
                 <ExternalLink className="size-6 transition group-hover:-translate-y-1 group-hover:translate-x-1" />
               </a>
             )}
