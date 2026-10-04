@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowRight, BookOpen, GraduationCap, Sparkles } from 'lucide-react'
+import { ArrowRight, BookOpen, ExternalLink, GraduationCap, Sparkles } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { academia, publications as fallbackPublications, site } from '@/config/site'
 import { getContent, type AcademiaContent, type PublicationItem } from '@/lib/content'
@@ -46,7 +46,7 @@ function Academia() {
               {data.interests.map((i) => <li key={i} className="flex gap-2"><span className="text-terracotta">✦</span>{i}</li>)}
             </ul>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Link to="/academia/portfolio" className="group flex items-center justify-between rounded-2xl border-2 border-ink bg-saffron p-6 transition hover:shadow-[6px_6px_0_var(--color-ink)]">
               <span><span className="block font-display text-2xl font-semibold">Academic work</span><span className="text-sm text-ink/75">Projects, talks, awards &amp; more</span></span>
               <ArrowRight className="size-6 transition group-hover:translate-x-1" />
@@ -55,6 +55,12 @@ function Academia() {
               <span><span className="flex items-center gap-2 font-display text-2xl font-semibold"><BookOpen className="size-5 text-saffron"/>Publications</span><span className="text-sm text-paper/65">{pubs.length ? pubs.length + ' ' + (pubs.length === 1 ? 'paper' : 'papers') + ' in the record' : 'Your papers, beautifully archived'}</span></span>
               <ArrowRight className="size-6 text-saffron transition group-hover:translate-x-1" />
             </Link>
+            {data.academic_portfolio_url && (
+              <a href={data.academic_portfolio_url} target="_blank" rel="noreferrer" className="group flex items-center justify-between rounded-2xl border-2 border-ink bg-card p-6 transition hover:bg-paper-deep hover:shadow-[6px_6px_0_var(--color-ink)]">
+                <span><span className="flex items-center gap-2 font-display text-2xl font-semibold"><ExternalLink className="size-5 text-terracotta"/>{data.academic_portfolio_label || 'Full Academic Profile'}</span><span className="text-sm text-ink/60">Open my complete academic profile ↗</span></span>
+                <ExternalLink className="size-6 transition group-hover:-translate-y-1 group-hover:translate-x-1" />
+              </a>
+            )}
           </div>
         </aside>
       </section>
