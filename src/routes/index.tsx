@@ -49,7 +49,7 @@ function Home() {
           <div className="mt-8 flex items-center gap-3">
             <span className="text-xs font-medium uppercase tracking-widest text-ink/50">Find me</span>
             <span className="h-px w-8 bg-ink/20" />
-            <SocialLinks />
+            <SocialLinks links={settings.socials} />
           </div>
         </div>
         <div className="relative">
