@@ -3,6 +3,8 @@ import { site } from '@/config/site'
 import { SocialLinks } from './SocialIcons'
 import type { NavItem } from './Header'
 
+const loginUrl = `${import.meta.env.BASE_URL}login/`
+
 export function Footer({ nav }: { nav: NavItem[] }) {
   const blogs = nav.find((n) => n.to === '/blogs')?.children ?? []
   return (
@@ -52,9 +54,9 @@ export function Footer({ nav }: { nav: NavItem[] }) {
           <p>
             © {new Date().getFullYear()} {site.title}. All thoughts my own.
           </p>
-          <Link to="/login" className="hover:text-saffron">
+          <a href={loginUrl} className="hover:text-saffron">
             Owner login
-          </Link>
+          </a>
         </div>
       </div>
     </footer>
