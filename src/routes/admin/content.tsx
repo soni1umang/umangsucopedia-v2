@@ -43,7 +43,7 @@ function ContentStudio() {
   const [admin,setAdmin] = useState(false)
   const [active,setActive] = useState<Key>('portfolio')
   const [saved,setSaved] = useState<Record<Key,unknown>>({})
-  const [draft,setDraft] = useState<unknown>(portfolio)
+  const [drafts,setDrafts] = useState<Record<Key,unknown>>({ about, academia, portfolio, side_hustles: sideHustles, photography: albums, paintings })
   const [loading,setLoading] = useState(true)
   const [busy,setBusy] = useState(false)
   const [uploading,setUploading] = useState<string|null>(null)
@@ -61,15 +61,25 @@ function ContentStudio() {
     if (r.error) { setError('Run supabase/migration_v2_content.sql first. '+r.error.message); setLoading(false); return }
     const map: Record<Key,unknown> = {} as Record<Key,unknown>
     for (const row of r.data ?? []) map[row.key as Key] = row.content
-    setSaved(map); setLoading(false)
+    const draftMap = {} as Record<Key, unknown>
+    ;(Object.keys(labels) as Key[]).forEach((key) => { draftMap[key] = map[key] ?? defaults[key] })
+    setSaved(map)
+    setDrafts(draftMap)
+    setLoading(false)
   }
 
   useEffect(()=>{ if (ready) void load() },[ready,user])
-  useEffect(()=>{ setDraft(saved[active] ?? defaults[active]); setError(''); setNotice('') },[active,saved])
-
+  const draft = drafts[active] ?? defaults[active]
+  const setDraft: Dispatch<SetStateAction<unknown>> = (updater) => {
+    setDrafts((current) => {
+      const previous = current[active]
+      const next = typeof updater === 'function' ? (updater as (value: unknown) => unknown)(previous) : updater
+      return { ...current, [active]: next }
+    })
+  }
   const dirty = useMemo(()=>JSON.stringify(draft)!==JSON.stringify(saved[active] ?? defaults[active]),[draft,saved,active])
 
-  function reset() { setDraft(saved[active] ?? defaults[active]); setError(''); setNotice('') }
+  function reset() { setDrafts(cur => ({...cur,[active]:saved[active] ?? defaults[active]})); setError(''); setNotice('') }
   async function save() {
     setError(''); setNotice(''); setBusy(true)
     try { await saveContent(active,draft); setSaved(cur=>({...cur,[active]:draft})); setNotice(labels[active]+' saved successfully.') }
@@ -107,7 +117,7 @@ function ContentStudio() {
         {active==='about' && <AboutEditor value={draft as AboutContent} setValue={setDraft}/>} 
         {active==='academia' && <AcademiaEditor value={draft as AcademiaContent} setValue={setDraft}/>} 
         {active==='portfolio' && <PortfolioEditor value={draft as PortfolioItem[]} setValue={setDraft}/>} 
-        {active==='side_hustles' && <SideHustlesEditor value={draft as SideHustleItem[]} setValue={setDraft}/>} 
+        {active==='side_hustles' && <SideHustlesEditor value={draft as SideHustleItem[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
         {active==='photography' && <PhotographyEditor value={draft as Album[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
         {active==='paintings' && <PaintingsEditor value={draft as Painting[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
         <div className='mt-6 flex items-center justify-between rounded-2xl border border-ink/10 bg-card p-4'>
@@ -155,11 +165,11 @@ function PortfolioEditor({value,setValue}:{value:PortfolioItem[];setValue:React.
   </Card>
 }
 
-function SideHustlesEditor({value,setValue}:{value:SideHustleItem[];setValue:React.Dispatch<React.SetStateAction<unknown>>}) {
+function SideHustlesEditor({value,setValue,uploading,imageChange}:{value:SideHustleItem[];setValue:Dispatch<SetStateAction<unknown>>;uploading:string|null;imageChange:(file:File,onDone:(url:string)=>void,id:string)=>Promise<void>}) {
   function update(i:number,p:Partial<SideHustleItem>){setValue(v=>(v as SideHustleItem[]).map((x,n)=>n===i?{...x,...p}:x))}
   function move(i:number,d:number){const a=[...value],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];setValue(a)}
   return <Card title='Other projects / side hustles' actions={<button type='button' className='btn-saffron !px-3 !py-2 text-sm' onClick={()=>setValue([...value,{title:'',status:'Idea',description:'',link:''}])}><Plus className='size-4'/> Add project</button>}>
-    <div className='grid gap-5 md:grid-cols-2'>{value.map((p,i)=><div key={i} className='rounded-2xl border border-ink/10 bg-paper p-5'><div className='mb-4 flex justify-between gap-3'><h3 className='font-semibold'>{p.title||'Untitled project'}</h3><ItemActions index={i} total={value.length} label='project' onUp={()=>move(i,-1)} onDown={()=>move(i,1)} onDelete={()=>setValue(value.filter((_,n)=>n!==i))}/></div><div className='space-y-4'><Field label='Project name'><TextInput value={p.title} onChange={e=>update(i,{title:e.target.value})}/></Field><Field label='Status'><select className='field w-full' value={p.status} onChange={e=>update(i,{status:e.target.value})}><option>Active</option><option>Idea</option><option>Paused</option></select></Field><Field label='Description'><TextArea rows={4} value={p.description} onChange={e=>update(i,{description:e.target.value})}/></Field><Field label='Link'><TextInput value={p.link} onChange={e=>update(i,{link:e.target.value})} placeholder='https://…'/></Field></div></div>)}</div>
+    <div className='grid gap-5 md:grid-cols-2'>{value.map((p,i)=><div key={i} className='rounded-2xl border border-ink/10 bg-paper p-5'><div className='mb-4 flex justify-between gap-3'><h3 className='font-semibold'>{p.title||'Untitled project'}</h3><ItemActions index={i} total={value.length} label='project' onUp={()=>move(i,-1)} onDown={()=>move(i,1)} onDelete={()=>setValue(value.filter((_,n)=>n!==i))}/></div><div className='space-y-4'><Field label='Project name'><TextInput value={p.title} onChange={e=>update(i,{title:e.target.value})}/></Field><Field label='Status'><select className='field w-full' value={p.status} onChange={e=>update(i,{status:e.target.value})}><option>Active</option><option>Idea</option><option>Paused</option></select></Field><Field label='Description'><TextArea rows={4} value={p.description} onChange={e=>update(i,{description:e.target.value})}/></Field><Field label='Link'><TextInput value={p.link} onChange={e=>update(i,{link:e.target.value})} placeholder='https://…'/></Field><Field label='Photos' hint='Add multiple pictures showing what you are building, making or doing.'><div className='space-y-3'>{(p.images ?? []).map((src,j)=><div key={j} className='rounded-xl border border-ink/10 bg-card p-3'><div className='flex items-start justify-between gap-3'><ImagePicker value={src} onChange={url=>update(i,{images:(p.images ?? []).map((x,n)=>n===j?url:x)})} uploading={uploading} imageChange={imageChange} id={'side-'+i+'-image-'+j}/><button type='button' className='mt-1 text-xs text-terracotta' onClick={()=>update(i,{images:(p.images ?? []).filter((_,n)=>n!==j)})}>Remove</button></div></div>)}<button type='button' className='btn-ghost !px-3 !py-2 text-sm' onClick={()=>update(i,{images:[...(p.images ?? []),'']})}><Plus className='size-4'/> Add picture</button></div></Field></div></div>)}</div>
   </Card>
 }
 
