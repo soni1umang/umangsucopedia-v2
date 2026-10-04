@@ -8,7 +8,7 @@ import { about, academia, albums, paintings, portfolio, sideHustles, site, socia
 
 type Key = 'site_settings' | 'about' | 'academia' | 'portfolio' | 'publications' | 'side_hustles' | 'photography' | 'paintings'
 const labels: Record<Key,string> = { site_settings:'Site settings', about:'About me', academia:'Academia', portfolio:'Academic work', publications:'Publications', side_hustles:'Other projects', photography:'Photography', paintings:'Paints' }
-const defaultSiteSettings: SiteSettings = { ...site, socials: socials.map((s) => ({ ...s, enabled: true })) }
+const defaultSiteSettings: SiteSettings = { ...site, socials: socials.map((s) => ({ ...s, enabled: s.key !== 'instagram2', icon: s.key === 'instagram2' ? 'instagram' : s.key as any })) }
 const publications: PublicationItem[] = []
 const defaults: Record<Key,unknown> = { site_settings:defaultSiteSettings, about, academia, portfolio, publications, side_hustles:sideHustles, photography:albums, paintings }
 const DRAFT_STORAGE_PREFIX = 'ucopedia-content-draft-v1:'
@@ -31,7 +31,9 @@ function normalizeSiteSettings(value: unknown): SiteSettings {
   return {
     ...defaultSiteSettings,
     ...v,
-    socials: Array.isArray(v.socials) ? v.socials.map((s) => ({ ...s, enabled: s.enabled !== false })) : defaultSiteSettings.socials,
+    socials: Array.isArray(v.socials)
+      ? v.socials.map((s:any) => ({ ...s, enabled: s.enabled !== false, icon: s.icon ?? (s.key === 'instagram2' ? 'instagram' : s.key) }))
+      : defaultSiteSettings.socials,
   }
 }
 
@@ -203,10 +205,25 @@ function Card({title,children,actions}:{title:string;children:ReactNode;actions?
 function SiteSettingsEditor({value,setValue}:{value:SiteSettings;setValue:Dispatch<SetStateAction<unknown>>}) {
   const set=(patch:Partial<SiteSettings>)=>setValue(v=>({...v as SiteSettings,...patch}))
   function updateSocial(i:number, patch:Partial<SiteSettings['socials'][number]>) { set({socials:value.socials.map((s,n)=>n===i?{...s,...patch}:s)}) }
+  function addSocial() {
+    const n = value.socials.length + 1
+    set({ socials: [...value.socials, { key: 'custom-' + Date.now(), label: 'New profile ' + n, href: '', enabled: false, icon: 'instagram' }] })
+  }
+  function removeSocial(i:number) { set({ socials: value.socials.filter((_,n)=>n!==i) }) }
   return <div className='space-y-6'>
     <Card title='Identity'><div className='grid gap-5 md:grid-cols-2'><Field label='Site name'><TextInput value={value.name} onChange={e=>set({name:e.target.value})}/></Field><Field label='Owner name'><TextInput value={value.owner} onChange={e=>set({owner:e.target.value})}/></Field><Field label='Browser / page title'><TextInput value={value.title} onChange={e=>set({title:e.target.value})}/></Field><Field label='Tagline'><TextInput value={value.tagline} onChange={e=>set({tagline:e.target.value})}/></Field></div><div className='mt-5'><Field label='Site description'><TextArea rows={4} value={value.description} onChange={e=>set({description:e.target.value})}/></Field></div></Card>
     <Card title='Contact'><div className='grid gap-5 md:grid-cols-2'><Field label='Email'><TextInput type='email' value={value.email} onChange={e=>set({email:e.target.value})}/></Field><Field label='Location'><TextInput value={value.location} onChange={e=>set({location:e.target.value})}/></Field></div></Card>
-    <Card title='Social profiles'><p className='mb-5 text-sm text-ink/55'>Switch profiles on or off and change their links without touching code.</p><div className='grid gap-4 md:grid-cols-2'>{value.socials.map((s,i)=><div key={s.key} className='rounded-xl border border-ink/10 bg-paper p-4'><div className='mb-3 flex items-center justify-between'><span className='font-semibold'>{s.label}</span><label className='flex items-center gap-2 text-xs font-medium'><input type='checkbox' checked={s.enabled} onChange={e=>updateSocial(i,{enabled:e.target.checked})}/> Show</label></div><TextInput value={s.href} onChange={e=>updateSocial(i,{href:e.target.value})} placeholder='https://…'/></div>)}</div></Card>
+    <Card title='Social profiles' actions={<button type='button' className='btn-saffron !px-3 !py-2 text-sm' onClick={addSocial}><Plus className='size-4'/> Add profile</button>}>
+      <p className='mb-5 text-sm text-ink/55'>You can have more than one account on the same platform. For example, two Instagram accounts.</p>
+      <div className='space-y-4'>{value.socials.map((s,i)=><div key={s.key} className='rounded-xl border border-ink/10 bg-paper p-4'>
+        <div className='grid gap-4 md:grid-cols-[11rem_1.2fr_2fr_auto] md:items-end'>
+          <Field label='Icon'><select className='field w-full' value={s.icon ?? 'instagram'} onChange={e=>updateSocial(i,{icon:e.target.value as SiteSettings['socials'][number]['icon']})}><option value='instagram'>Instagram</option><option value='youtube'>YouTube</option><option value='whatsapp'>WhatsApp</option><option value='linkedin'>LinkedIn</option><option value='github'>GitHub</option><option value='twitter'>X / Twitter</option></select></Field>
+          <Field label='Label'><TextInput value={s.label} onChange={e=>updateSocial(i,{label:e.target.value})} placeholder='e.g. Instagram · Photography'/></Field>
+          <Field label='Profile URL'><TextInput value={s.href} onChange={e=>updateSocial(i,{href:e.target.value})} placeholder='https://…'/></Field>
+          <div className='flex items-center gap-2 pb-1'><label className='flex items-center gap-2 text-xs font-medium'><input type='checkbox' checked={s.enabled} onChange={e=>updateSocial(i,{enabled:e.target.checked})}/> Show</label><button type='button' className='text-xs font-semibold text-terracotta hover:underline' onClick={()=>removeSocial(i)}>Remove</button></div>
+        </div>
+      </div>)}</div>
+    </Card>
   </div>
 }
 
