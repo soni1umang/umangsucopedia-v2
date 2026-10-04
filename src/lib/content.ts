@@ -68,6 +68,8 @@ export type SiteSettings = {
   description: string
   email: string
   location: string
+  academic_portfolio_url: string
+  academic_portfolio_label: string
   socials: SocialSetting[]
 }
 
