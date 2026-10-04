@@ -5,10 +5,11 @@ import { PostCard } from '@/components/PostCard'
 import { CategoryCard } from '@/components/CategoryCard'
 import { SocialLinks } from '@/components/SocialIcons'
 import { about, albums, paintings, site } from '@/config/site'
+import { getContent, type Album, type AboutContent, type Painting } from '@/lib/content'
 import { img } from '@/lib/img'
 
 export const Route = createFileRoute('/')({
-  loader: async () => ({ latest: (await posts()).slice(0, 6), categories: await categories() }),
+  loader: async () => { const [latest, cs, aboutData, photoData, paintData] = await Promise.all([posts(), categories(), getContent<AboutContent>('about', about), getContent<Album[]>('photography', albums), getContent<Painting[]>('paintings', paintings)]); return { latest: latest.slice(0, 6), categories: cs, about: aboutData, albums: photoData, paintings: paintData } },
   component: Home,
 })
 
@@ -20,7 +21,7 @@ const sections = [
 ] as const
 
 function Home() {
-  const { latest, categories } = Route.useLoaderData()
+  const { latest, categories, about: aboutData, albums: albumData, paintings: paintingData } = Route.useLoaderData()
   const [featured, ...rest] = latest
 
   return (
@@ -65,7 +66,7 @@ function Home() {
 
       <div className="overflow-hidden border-y-2 border-ink bg-ink py-3 text-paper">
         <div className="flex w-max animate-[marquee_40s_linear_infinite] gap-10 whitespace-nowrap font-display text-2xl italic">
-          {[...about.interests, ...about.interests, ...about.interests].map((t, i) => (
+          {[...aboutData.interests, ...aboutData.interests, ...aboutData.interests].map((t, i) => (
             <span key={i}>{t} <span className="text-saffron not-italic">✦</span></span>
           ))}
         </div>
@@ -125,7 +126,7 @@ function Home() {
               paintings from quiet afternoons, and experiments on the side.
             </p>
             <div className="mt-8 grid grid-cols-3 gap-2">
-              {[albums[0]?.photos[1]?.src, paintings[0]?.src, albums[0]?.photos[3]?.src]
+              {[albumData[0]?.photos[1]?.src, paintingData[0]?.src, albumData[0]?.photos[3]?.src]
                 .filter(Boolean)
                 .map((src, i) => (
                   <img key={i} src={img(src as string, 240, 240)} alt="" className="aspect-square rounded-xl object-cover" />
