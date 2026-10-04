@@ -26,7 +26,7 @@ export type SocialKey =
 
 /** Replace the placeholder URLs with your own profiles. */
 export const socials: { key: SocialKey; label: string; href: string }[] = [
-  { key: 'instagram', label: 'Instagram', href: 'https://www.instagram.com/flowing._wind/' },
+  { key: 'instagram', label: 'Instagram', href: 'https://www.instagram.com/flowing._wind/' },\n  { key: 'instagram2', label: 'Instagram · second account', href: '' },
   { key: 'youtube', label: 'YouTube', href: 'https://youtube.com/@your-channel' },
   // WhatsApp: use your number in international format without "+" or spaces.
   { key: 'whatsapp', label: 'WhatsApp', href: 'https://wa.me/917880847995' },
