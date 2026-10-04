@@ -134,6 +134,8 @@ export const paintings: (Photo & { title: string; medium: string; year: string }
   { src: '/img/paint-3.jpg', title: 'Tides of Thought', medium: 'Gouache', year: '2024', caption: 'An abstract study in circles and waves.' },
 ]
 
+export const publications: import('@/lib/content').PublicationItem[] = []
+
 export const sideHustles = [
   {
     title: 'Side project one',
