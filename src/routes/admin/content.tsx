@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode, type Dispatch, type SetStateAction } from 'react'
 import { ArrowDown, ArrowUp, ImagePlus, Link2, Plus, Save, Trash2, RotateCcw, Eye } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useIdentity } from '@/lib/identity-context'
@@ -121,7 +121,7 @@ function ContentStudio() {
 
 function Card({title,children,actions}:{title:string;children:ReactNode;actions?:ReactNode}) { return <div className='rounded-2xl border border-ink/15 bg-card p-5 md:p-6'><div className='mb-5 flex flex-wrap items-start justify-between gap-3'><h2 className='text-2xl font-semibold'>{title}</h2>{actions}</div>{children}</div> }
 
-function AboutEditor({value,setValue}:{value:AboutContent;setValue:React.Dispatch<React.SetStateAction<unknown>>}) {
+function AboutEditor({value,setValue}:{value:AboutContent;setValue:Dispatch<SetStateAction<unknown>>}) {
   const set=(patch:Partial<AboutContent>)=>setValue(v=>({...v as AboutContent,...patch}))
   return <div className='space-y-6'>
     <Card title='Introduction'><div className='grid gap-5'><Field label='Headline'><TextInput value={value.headline} onChange={e=>set({headline:e.target.value})}/></Field><Field label='Intro'><TextArea rows={4} value={value.intro} onChange={e=>set({intro:e.target.value})}/></Field></div></Card>
