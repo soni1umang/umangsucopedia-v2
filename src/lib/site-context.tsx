@@ -4,7 +4,7 @@ import { getContent, type SiteSettings } from '@/lib/content'
 
 const fallback: SiteSettings = {
   ...fallbackSite,
-  socials: fallbackSocials.map((s) => ({ ...s, enabled: true })),
+  socials: fallbackSocials.map((s) => ({ ...s, enabled: true, icon: s.key === 'instagram2' ? 'instagram' : s.key as any })),
 }
 
 const Ctx = createContext<SiteSettings>(fallback)
@@ -19,7 +19,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       setSettings({
         ...fallback,
         ...data,
-        socials: Array.isArray(data?.socials) ? data.socials : fallback.socials,
+        socials: Array.isArray(data?.socials) ? data.socials.map((s:any) => ({ ...s, icon: s.icon ?? (s.key === 'instagram2' ? 'instagram' : s.key) })) : fallback.socials,
       })
     })
     return () => { alive = false }
