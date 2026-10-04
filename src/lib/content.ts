@@ -20,6 +20,10 @@ export type PortfolioItem = {
   year: string
   description: string
   link: string
+  venue?: string
+  authors?: string
+  images?: string[]
+  featured?: boolean
 }
 
 export type SideHustleItem = {
@@ -28,6 +32,24 @@ export type SideHustleItem = {
   description: string
   link: string
   images?: string[]
+}
+
+export type SocialSetting = {
+  key: string
+  label: string
+  href: string
+  enabled: boolean
+}
+
+export type SiteSettings = {
+  name: string
+  owner: string
+  title: string
+  tagline: string
+  description: string
+  email: string
+  location: string
+  socials: SocialSetting[]
 }
 
 export type Photo = { src: string; caption: string }
