@@ -33,7 +33,7 @@ export function buildNav(categories: Category[], photoAlbums: { slug: string; ti
     {
       label: 'Academia',
       to: '/academia',
-      children: [{ label: 'Portfolio', to: '/academia/portfolio' }],
+      children: [{ label: 'Portfolio', to: '/academia/portfolio' }, { label: 'Publications', to: '/academia/publications' }],
     },
     {
       label: 'Photography',
