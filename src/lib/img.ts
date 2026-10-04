@@ -1,1 +1,10 @@
-export function img(src:string|null|undefined,w:number,h?:number){if(!src)return '';if(!src.startsWith('/'))return src;return 'https://umangsucopedia.netlify.app'+src}export function formatDate(d:Date|string|null|undefined){if(!d)return '';return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
+export function img(src: string | null | undefined, _w?: number, _h?: number) {
+  if (!src) return ''
+  if (!src.startsWith('/')) return src
+  return import.meta.env.BASE_URL.replace(/\/$/, '') + src
+}
+
+export function formatDate(d: Date | string | null | undefined) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
