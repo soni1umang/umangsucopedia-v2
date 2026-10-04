@@ -11,6 +11,21 @@ const labels: Record<Key,string> = { site_settings:'Site settings', about:'About
 const defaultSiteSettings: SiteSettings = { ...site, socials: socials.map((s) => ({ ...s, enabled: true })) }
 const publications: PublicationItem[] = []
 const defaults: Record<Key,unknown> = { site_settings:defaultSiteSettings, about, academia, portfolio, publications, side_hustles:sideHustles, photography:albums, paintings }
+const DRAFT_STORAGE_PREFIX = 'ucopedia-content-draft-v1:'
+function readBrowserDraft(userId:string): { updatedAt:number; drafts:Record<Key,unknown> } | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_PREFIX + userId)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || typeof parsed.updatedAt !== 'number' || !parsed.drafts) return null
+    return parsed
+  } catch { return null }
+}
+function writeBrowserDraft(userId:string, drafts:Record<Key,unknown>) {
+  try {
+    localStorage.setItem(DRAFT_STORAGE_PREFIX + userId, JSON.stringify({ updatedAt:Date.now(), drafts }))
+  } catch { /* Storage may be unavailable or full. The cloud save still works. */ }
+}
 
 export const Route = createFileRoute('/admin/content')({ component: ContentStudio })
 
@@ -65,8 +80,16 @@ function ContentStudio() {
     for (const row of r.data ?? []) map[row.key as Key] = row.content
     const draftMap = {} as Record<Key, unknown>
     ;(Object.keys(labels) as Key[]).forEach((key) => { draftMap[key] = map[key] ?? defaults[key] })
+    const browserDraft = readBrowserDraft(user.id)
+    if (browserDraft && browserDraft.updatedAt > 0) {
+      setDrafts({ ...draftMap, ...browserDraft.drafts })
+      setBrowserDraftTime(browserDraft.updatedAt)
+    } else {
+      setDrafts(draftMap)
+      setBrowserDraftTime(null)
+    }
     setSaved(map)
-    setDrafts(draftMap)
+    setBrowserDraftReady(true)
     setLoading(false)
   }
 
@@ -79,12 +102,42 @@ function ContentStudio() {
       return { ...current, [active]: next }
     })
   }
+  useEffect(() => {
+    if (!browserDraftReady || !user) return
+    writeBrowserDraft(user.id, drafts)
+  }, [browserDraftReady, user, drafts])
+
+  useEffect(() => {
+    if (!browserDraftReady || !user) return
+    const persistNow = () => writeBrowserDraft(user.id, drafts)
+    window.addEventListener('beforeunload', persistNow)
+    document.addEventListener('visibilitychange', persistNow)
+    return () => {
+      window.removeEventListener('beforeunload', persistNow)
+      document.removeEventListener('visibilitychange', persistNow)
+    }
+  }, [browserDraftReady, user, drafts])
+
   const dirty = useMemo(()=>JSON.stringify(draft)!==JSON.stringify(saved[active] ?? defaults[active]),[draft,saved,active])
 
   function reset() { setDrafts(cur => ({...cur,[active]:saved[active] ?? defaults[active]})); setError(''); setNotice('') }
   async function save() {
     setError(''); setNotice(''); setBusy(true)
-    try { await saveContent(active,draft); setSaved(cur=>({...cur,[active]:draft})); setNotice(labels[active]+' saved successfully.') }
+    try {
+      await saveContent(active,draft)
+      setSaved(cur=>({...cur,[active]:draft}))
+      if (user) {
+        setDrafts(current => {
+          const next = { ...current }
+          try {
+            localStorage.setItem(DRAFT_STORAGE_PREFIX + user.id, JSON.stringify({ updatedAt:Date.now(), drafts: next }))
+            setBrowserDraftTime(Date.now())
+          } catch {}
+          return next
+        })
+      }
+      setNotice(labels[active]+' saved successfully.')
+    }
     catch (e) { setError(e instanceof Error ? e.message : 'Could not save changes.') }
     finally { setBusy(false) }
   }
@@ -111,7 +164,11 @@ function ContentStudio() {
       </div>
     </div>
 
-    {(error||notice) && <p className={'mt-6 rounded-xl px-4 py-3 text-sm '+(error?'bg-terracotta/10 text-terracotta':'bg-saffron/40')}>{error||notice}</p>}
+    {browserDraftTime && <div className='mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink/10 bg-card px-4 py-3 text-sm'>
+      <span><strong>Browser backup active.</strong> Your unsaved work is being kept on this device, so a refresh or switching browser tabs should not wipe it.</span>
+      <button type='button' className='text-xs font-semibold text-terracotta hover:underline' onClick={() => { if (!user) return; if (!confirm('Clear the local browser backup? Unsaved changes will be lost.')) return; localStorage.removeItem(DRAFT_STORAGE_PREFIX + user.id); setBrowserDraftTime(null); setDrafts((Object.keys(labels) as Key[]).reduce((acc,k)=>({...acc,[k]:saved[k] ?? defaults[k]}),{} as Record<Key,unknown>)) }}>Clear backup</button>
+    </div>}
+    {(error||notice) && <p className={'mt-4 rounded-xl px-4 py-3 text-sm '+(error?'bg-terracotta/10 text-terracotta':'bg-saffron/40')}>{error||notice}</p>}
 
     <div className='mt-8 grid gap-6 lg:grid-cols-[15rem_1fr]'>
       <nav className='self-start rounded-2xl border border-ink/15 bg-card p-2 lg:sticky lg:top-24'>{tabs.map(k=><button type='button' key={k} onClick={()=>{if(dirty && !confirm('You have unsaved changes. Switch sections anyway?')) return; setActive(k)}} className={'mb-1 block w-full rounded-xl px-4 py-3 text-left text-sm font-semibold last:mb-0 '+(active===k?'bg-ink text-paper':'hover:bg-paper-deep')}>{labels[k]}</button>)}</nav>
