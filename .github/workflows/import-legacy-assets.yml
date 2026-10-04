@@ -41,11 +41,11 @@ jobs:
           for file in "${files[@]}"; do
             if [ ! -f "public/img/${file}" ]; then
               for attempt in 1 2 3 4 5; do
-      if curl --retry 3 --retry-delay 2 --connect-timeout 10 --max-time 60 -fsSL "${base}/${file}" -o "public/img/${file}"; then break; fi
-      rm -f "public/img/${file}"
-      if [ "$attempt" = "5" ]; then echo "Could not download ${file}"; exit 1; fi
-      sleep 3
-    done
+              if curl --retry 3 --retry-delay 2 --connect-timeout 10 --max-time 60 -fsSL "${base}/${file}" -o "public/img/${file}"; then break; fi
+              rm -f "public/img/${file}"
+              if [ "$attempt" = "5" ]; then echo "Could not download ${file}"; exit 1; fi
+              sleep 3
+            done
             fi
           done
 
