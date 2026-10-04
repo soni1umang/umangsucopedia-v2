@@ -125,16 +125,11 @@ function ContentStudio() {
     setError(''); setNotice(''); setBusy(true)
     try {
       await saveContent(active,draft)
-      setSaved(cur=>({...cur,[active]:draft}))
+      const nextSaved = { ...saved, [active]: draft }
+      setSaved(nextSaved)
       if (user) {
-        setDrafts(current => {
-          const next = { ...current }
-          try {
-            localStorage.setItem(DRAFT_STORAGE_PREFIX + user.id, JSON.stringify({ updatedAt:Date.now(), drafts: next }))
-            setBrowserDraftTime(Date.now())
-          } catch {}
-          return next
-        })
+        writeBrowserDraft(user.id, drafts)
+        setBrowserDraftTime(Date.now())
       }
       setNotice(labels[active]+' saved successfully.')
     }
