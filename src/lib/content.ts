@@ -57,6 +57,7 @@ export type SocialSetting = {
   label: string
   href: string
   enabled: boolean
+  icon?: 'instagram' | 'youtube' | 'whatsapp' | 'linkedin' | 'github' | 'twitter'
 }
 
 export type SiteSettings = {
