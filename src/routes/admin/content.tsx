@@ -118,7 +118,7 @@ function ContentStudio() {
         {active==='site_settings' && <SiteSettingsEditor value={draft as SiteSettings} setValue={setDraft}/>} 
         {active==='about' && <AboutEditor value={draft as AboutContent} setValue={setDraft}/>} 
         {active==='academia' && <AcademiaEditor value={draft as AcademiaContent} setValue={setDraft}/>} 
-        {active==='portfolio' && <PortfolioEditor value={draft as PortfolioItem[]} setValue={setDraft}/>} 
+        {active==='portfolio' && <PortfolioEditor value={draft as PortfolioItem[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
         {active==='side_hustles' && <SideHustlesEditor value={draft as SideHustleItem[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
         {active==='photography' && <PhotographyEditor value={draft as Album[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
         {active==='paintings' && <PaintingsEditor value={draft as Painting[]} setValue={setDraft} uploading={uploading} imageChange={imageChange}/>} 
@@ -169,7 +169,7 @@ function AcademiaEditor({value,setValue}:{value:AcademiaContent;setValue:React.D
     <Card title='Research interests' actions={<button type='button' className='btn-ghost !px-3 !py-2 text-sm' onClick={()=>set({interests:[...value.interests,'']})}><Plus className='size-4'/> Add interest</button>}><div className='grid gap-3 sm:grid-cols-2'>{value.interests.map((x,i)=><div key={i} className='flex gap-2'><TextInput value={x} onChange={e=>set({interests:value.interests.map((v,n)=>n===i?e.target.value:v)})}/><button type='button' className='grid size-11 shrink-0 place-items-center rounded-xl border border-ink/10 text-terracotta' onClick={()=>set({interests:value.interests.filter((_,n)=>n!==i)})}><Trash2 className='size-4'/></button></div>)}</div></Card></div>
 }
 
-function PortfolioEditor({value,setValue}:{value:PortfolioItem[];setValue:Dispatch<SetStateAction<unknown>>}) {
+function PortfolioEditor({value,setValue,uploading,imageChange}:{value:PortfolioItem[];setValue:Dispatch<SetStateAction<unknown>>;uploading:string|null;imageChange:(file:File,onDone:(url:string)=>void,id:string)=>Promise<void>}) {
   function update(i:number,p:Partial<PortfolioItem>){setValue(v=>(v as PortfolioItem[]).map((x,n)=>n===i?{...x,...p}:x))}
   function move(i:number,d:number){const a=[...value],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];setValue(a)}
   function addImage(i:number){update(i,{images:[...(value[i].images ?? []),'']})}
